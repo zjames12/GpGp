@@ -537,7 +537,6 @@ arma::mat exponential_anisotropic2D(arma::vec covparms, arma::mat locs ){
     //int dim = locs.n_cols;
     int n = locs.n_rows;
     double nugget = covparms( 0 )*covparms( 4 );
-
     // calculate covariances
     arma::mat covmat(n,n);
     for(int i1 = 0; i1 < n; i1++){
@@ -594,7 +593,6 @@ arma::cube d_exponential_anisotropic2D(arma::vec covparms, arma::mat locs ){
         d += pow( covparms(1)*h0, 2 );
         d += pow( covparms(2)*h0 + covparms(3)*h1, 2 );
         d = pow( d, 0.5 );
-        
         double cov;        
         if( d == 0.0 ){
             cov = covparms(0);
@@ -769,11 +767,180 @@ arma::cube d_exponential_anisotropic3D(arma::vec covparms, arma::mat locs ){
 }
 
 
+// [[Rcpp::export]]
+arma::mat exponential_anisotropic(arma::vec covparms, arma::mat locs ){
+    // printf("good\n");
+    // covparms(0) = sigmasq
+    // covparms(1) = L00
+    // covparms(2) = L10
+    // covparms(3) = L11
+    // covparms(4) = L20
+    // covparms(5) = L21
+    // covparms(6) = L22
+    // covparms(7) = tausq
+    // nugget = sigmasq*tausq
+    // overall variance = sigmasq*(1 + tausq) = sigmasq + nugget
+    
+    int d = locs.n_cols;
 
+    
+    arma::mat M(d,d);
+    
+    for (int i = 0; i < d; i++) {
+        for (int j = 0; j <= i; j++) {
+            M(i,j) = covparms(i * (i + 1) / 2 + j + 1);
+        }
+    }
+    
 
+    // printf("M: (%i, %i)", M.n_rows, M.n_cols);
+    // printf("locs: (%i, %i)", locs.n_rows, locs.n_cols);
+    // printf("\n");
+    // if (locs.n_rows == 5) {
+    //     locs.print();
+    //     M.print();
+    //     (locs * M.t()).print();
+    // }
 
+    arma::mat locs_projected = locs * M.t();
+    arma::vec iso_covparms = {covparms(0), 1, covparms(covparms.n_elem - 1)};
 
+    int dim = locs_projected.n_cols;
+    int n = locs_projected.n_rows;
+    double nugget = iso_covparms( 0 )*iso_covparms( 2 );
+    
+    // create scaled locations
+    arma::mat locs_scaled(n,dim);
+    for(int j=0; j<dim; j++){ 
+        for(int i=0; i<n; i++){
+            locs_scaled(i,j) = locs_projected(i,j)/iso_covparms(1);
+        }
+    }
+    // calculate covariances
+    arma::mat covmat(n,n);
+    for(int i1=0; i1<n; i1++){ for(int i2=0; i2<=i1; i2++){
+        // calculate distance
+        double d = 0.0;
+        for(int j=0; j<dim; j++){
+            d += pow( locs_scaled(i1,j) - locs_scaled(i2,j), 2.0 );
+        }
+        d = std::sqrt( d );
 
+        // calculate covariance            
+        covmat(i2,i1) = iso_covparms(0)*std::exp( -d );
+        covmat(i1,i2) = covmat(i2,i1);
+
+    }}
+
+    // add nugget
+    for(int i1=0; i1<n; i1++){
+	    covmat(i1,i1) += nugget;
+    }
+
+    return covmat;
+}
+
+// [[Rcpp::export]]
+arma::cube d_exponential_anisotropic(arma::vec covparms, arma::mat locs ){
+    // printf("good\n");
+    // covparms(0) = sigmasq
+    // covparms(1) = L00
+    // covparms(2) = L10
+    // covparms(3) = L11
+    // covparms(4) = L20
+    // covparms(5) = L21
+    // covparms(6) = L22
+    // covparms(7) = tausq
+    // nugget = sigmasq*tausq
+    // overall variance = sigmasq*(1 + tausq) = sigmasq + nugget
+
+    int d = locs.n_cols;
+
+    arma::mat M(d,d,fill::zeros);
+
+    // printf("%i\n", d);
+    for (int i = 0; i < d; i++) {
+        for (int j = 0; j <= i; j++) {
+            M(i,j) = covparms(i * (i + 1) / 2 + j + 1);
+        }
+    }
+
+    int n = locs.n_rows;
+    double nugget = covparms( 0 )*covparms( covparms.n_elem - 1 );
+
+    // calculate derivatives
+    arma::cube dcovmat = arma::cube(n,n,covparms.n_elem, fill::zeros);
+    for(int i2=0; i2<n; i2++){ for(int i1=0; i1<=i2; i1++){
+        
+        // calculate rescaled distance
+        // double h0 = locs(i1,0) - locs(i2,0);
+        // double h1 = locs(i1,1) - locs(i2,1);
+        // double h2 = locs(i1,2) - locs(i2,2);
+        // // 2 spatial + 1 time dimen is hard coded here
+        // double d = 0.0;
+        // d += pow( covparms(1)*h0, 2 );
+        // d += pow( covparms(2)*h0 + covparms(3)*h1, 2 );
+        // d += pow( covparms(4)*h0 + covparms(5)*h1 + covparms(6)*h2, 2 );
+        // d = pow( d, 0.5 );
+        arma::rowvec h = locs.row(i1) - locs.row(i2);
+        double d = norm(h * M.t(),2);
+        double cov;        
+        if( d == 0.0 ){
+            cov = covparms(0);
+            dcovmat(i1,i2,0) += 1.0;
+        } else {
+            // cov = covparms(0)*std::exp( -d );
+            // // variance parameter
+            // dcovmat(i1,i2,0) += cov/covparms(0);
+            // // cholesky parameters
+            // double dcov = -covparms(0)*exp(-d)/d;
+            // double Limhm = covparms(1)*h0;
+            //     dcovmat(i1,i2,1) = dcov*Limhm*h0;
+            // Limhm = covparms(2)*h0 + covparms(3)*h1;
+            //     dcovmat(i1,i2,2) = dcov*Limhm*h0;
+            //     dcovmat(i1,i2,3) = dcov*Limhm*h1;
+            // Limhm = covparms(4)*h0 + covparms(5)*h1 + covparms(6)*h2;
+            //     dcovmat(i1,i2,4) = dcov*Limhm*h0;
+            //     dcovmat(i1,i2,5) = dcov*Limhm*h1;
+            //     dcovmat(i1,i2,6) = dcov*Limhm*h2;
+
+            cov = covparms(0)*std::exp( -d );
+            dcovmat(i1,i2,0) += cov/covparms(0);
+            double dcov = -covparms(0)*exp(-d)/d;
+            int i = 1;
+            int cnt = 1;
+            double Limhm;
+
+            while (i < covparms.n_elem-1) {
+                int j = 0;
+                Limhm = 0;
+                while (j < cnt) {
+                    // t = c(t, y[i+j-1])
+                    Limhm += covparms(i+j) * h(j);
+                    j += 1;
+                }
+                j = 0;
+                while (j < cnt) {
+                    dcovmat(i1, i2, i+j) = dcov * Limhm * h(j);
+                    j += 1;
+                }
+                i += cnt;
+                cnt += 1;
+            }
+            
+        }
+        if( i1 == i2 ){ // update diagonal entry
+            dcovmat(i1,i2,0) += covparms(covparms.n_elem - 1);
+            dcovmat(i1,i2,covparms.n_elem - 1) += covparms(0); 
+        } else { // fill in opposite entry
+            for(int j=0; j<covparms.n_elem; j++){
+                dcovmat(i2,i1,j) = dcovmat(i1,i2,j);
+            }
+        }
+    }}
+
+    return dcovmat;
+}
 
 
 

@@ -248,6 +248,14 @@ d_exponential_anisotropic3D <- function(covparms, locs) {
     .Call('_GpGp_d_exponential_anisotropic3D', PACKAGE = 'GpGp', covparms, locs)
 }
 
+exponential_anisotropic <- function(covparms, locs) {
+    .Call('_GpGp_exponential_anisotropic', PACKAGE = 'GpGp', covparms, locs)
+}
+
+d_exponential_anisotropic <- function(covparms, locs) {
+    .Call('_GpGp_d_exponential_anisotropic', PACKAGE = 'GpGp', covparms, locs)
+}
+
 #' Geometrically anisotropic exponential covariance function (three dimensions, alternate parameterization)
 #'
 #' From a matrix of locations and covariance parameters of the form
@@ -343,7 +351,7 @@ d_exponential_scaledim <- function(covparms, locs) {
 #' (variance, range_1, range_2, smoothness, nugget), return the square matrix of
 #' all pairwise covariances.
 #' @param locs A matrix with \code{n} rows and \code{d+1} columns.
-#' Each row of locs is a point in R^{d+1}. The first \code{d} columns
+#' Each row of locs is a point in R^(d+1). The first \code{d} columns
 #' should contain the spatial coordinates. The last column contains the times.
 #' @param covparms A vector with covariance parameters
 #' in the form (variance, range_1, range_2, smoothness, nugget). range_1 is the
@@ -373,7 +381,7 @@ d_matern_spacetime <- function(covparms, locs) {
 #' (variance, range_1, range_2, nugget), return the square matrix of
 #' all pairwise covariances.
 #' @param locs A matrix with \code{n} rows and \code{d+1} columns.
-#' Each row of locs is a point in R^{d+1}. The first \code{d} columns
+#' Each row of locs is a point in R^(d+1). The first \code{d} columns
 #' should contain the spatial coordinates. The last column contains the times.
 #' @param covparms A vector with covariance parameters
 #' in the form (variance, range_1, range_2, nugget). range_1 is the

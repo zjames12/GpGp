@@ -160,7 +160,6 @@ void compute_pieces(
     int profbeta,
     int grad_info
 ){
-
     // data dimensions
     int n = y.n_elem;
     int m = NNarray.n_cols;
@@ -217,7 +216,6 @@ void compute_pieces(
         
         // compute covariance matrix and derivatives and take cholesky
         arma::mat covmat = p_covfun[0]( covparms, locsub );	
-	
         arma::cube dcovmat;
         if(grad_info){ 
             dcovmat = p_d_covfun[0]( covparms, locsub ); 
@@ -328,7 +326,7 @@ void compute_pieces(
 	// }
 
 
-    }
+}
 #pragma omp critical
 {
     *XSX += l_XSX;
@@ -622,7 +620,6 @@ void synthesize(
     arma::mat NNarray_c = arma::mat(NNarray.begin(),NNarray.nrow(),NNarray.ncol());
     arma::vec y_c = arma::vec(y.begin(),y.length());
     arma::mat X_c = arma::mat(X.begin(),X.nrow(),X.ncol());
-    
     compute_pieces(
         covparms_c, covfun_name, locs_c, NNarray_c, y_c, X_c,
         &XSX, &ySX, &ySy, &logdet, &dXSX, &dySX, &dySy, &dlogdet, &ainfo,

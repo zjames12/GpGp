@@ -128,6 +128,7 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
               "matern_anisotropic2D",
               "exponential_anisotropic2D",
               "exponential_anisotropic3D",
+              "exponential_anisotropic",
               "matern_anisotropic3D",
               "matern_anisotropic3D_alt",
               "exponential_anisotropic3D_alt",
@@ -210,7 +211,6 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
         active <- rep(TRUE, length(start_parms) )
         active[fixed_parms] <- FALSE
     } 
-
     # get link functions
     linkfuns <- get_linkfun(covfun_name)
     link <- linkfuns$link
@@ -227,7 +227,6 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
     pen <- penalty$pen
     dpen <- penalty$dpen
     ddpen <- penalty$ddpen
-
     # get an ordering and reorder everything
     if(reorder){
         if(!silent) cat("Reordering...")
@@ -289,11 +288,9 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
         } else {
 
             likfun <- function(logparms){
-
                 lp <- rep(NA,length(start_parms))
                 lp[active] <- logparms
                 lp[!active] <- invlink_startparms[!active]
-                
                 likobj <- vecchia_profbeta_loglik_grad_info(
                     link(lp),covfun_name,yord,Xord,locsord,NNarray[,1:(m+1)])
                 likobj$loglik <- -likobj$loglik - pen(link(lp))
@@ -415,6 +412,21 @@ get_start_parms <- function(y,X,locs,covfun_name){
         start_range3 <- mean( dmat )/4
         start_parms <- c(start_var, 1/start_range1, 0, 1/start_range2,
             0, 0, 1/start_range3, start_nug )
+    }
+    if(covfun_name %in% c("exponential_anisotropic")){
+        if (ncol(locs) == 2) {
+            start_range <- mean( dmat )/4
+            start_parms <- c(start_var, 1/start_range, 0, 1/start_range, start_nug)
+        } else {
+            start_parms <- c(start_var)
+            for (i in 1:ncol(locs)) {
+                dmat <- fields::rdist(locs[randinds,i,drop=FALSE])
+                start_range <- mean( dmat )/4
+                start_parms <- c(start_parms, rep(0, i-1), 1/start_range)
+            }
+            start_parms <- c(start_parms, start_nug)
+        }
+        
     }
     if(covfun_name %in% c("exponential_anisotropic3D_alt")){
         dmat <- fields::rdist(locs[randinds,1,drop=FALSE])
@@ -605,6 +617,70 @@ get_linkfun <- function(covfun_name){
         { c( exp(x[1:2]), 1.0, exp(x[4]), 1.0,1.0, exp(x[7:8]) ) }
         invlink <- function(x)
         { c( log(x[1:2]), x[3], log(x[4]), x[5:6], log(x[7:8]) ) }
+    }
+    if(covfun_name %in% c("exponential_anisotropic")){
+        link <- function(x)
+        {             
+            t = c(exp(x[1]))
+
+            y = x[2:(length(x)-1)]
+            i = 1
+            cnt = 1
+            while (i < length(y)) {
+                j = 1
+                while (j < cnt) {
+                    t = c(t, y[i+j-1])
+                    j = j + 1
+                }
+                i = i + cnt
+                cnt = cnt + 1
+                 t = c(t, exp(y[i-1]))
+            }
+            t = c(t, exp(x[length(x)]))
+            return(t)
+        }
+        dlink <- function(x)
+        { 
+            t = c(exp(x[1]))
+
+            y = x[2:(length(x)-1)]
+            i = 1
+            cnt = 1
+            while (i < length(y)) {
+                j = 1
+                while (j < cnt) {
+                    t = c(t, 1.0)
+                    j = j + 1
+                }
+                
+                i = i + cnt
+                cnt = cnt + 1
+                t = c(t, exp(y[i-1]))
+            }
+            t = c(t, exp(x[length(x)]))
+            return(t)
+        }
+        invlink <- function(x)
+        { 
+            t = c(log(x[1]))
+            
+            y = x[2:(length(x)-1)]
+            i = 1
+            cnt = 1
+            while (i < length(y)) {
+                j = 1
+                while (j < cnt) {
+                    t = c(t, y[i+j-1])
+                    j = j + 1
+                }
+                
+                i = i + cnt
+                cnt = cnt + 1
+                t = c(t, log(y[i-1]))
+            }
+            t = c(t, log(x[length(x)]))
+            return(t)
+        }
     }
     if(covfun_name %in% c("exponential_anisotropic3D_alt")){
         link <- function(x)
@@ -832,6 +908,11 @@ get_penalty <- function(y,X,locs,covfun_name){
           pen <- function(x){  pen_nug(x,8)  +   pen_var(x,1)   }
          dpen <- function(x){  dpen_nug(x,8)  +  dpen_var(x,1)  }
         ddpen <- function(x){  ddpen_nug(x,8)  + ddpen_var(x,1) }
+    }
+    if(covfun_name %in% c("exponential_anisotropic")){
+          pen <- function(x){  pen_nug(x,length(x))  +   pen_var(x,1)   }
+         dpen <- function(x){  dpen_nug(x,length(x))  +  dpen_var(x,1)  }
+        ddpen <- function(x){  ddpen_nug(x,length(x))  + ddpen_var(x,1) }
     }
     if(covfun_name %in% c("matern_anisotropic3D", "matern_anisotropic3D_alt") ){
           pen <- function(x){  pen_nug(x,9) +   pen_sm(x,8) +   pen_var(x,1) + pen_sm_hi(x,8)  }

@@ -58,8 +58,9 @@ fisher_scoring <- function( likfun, start_parms, link,
     
     # evaluate function at initial values
     logparms <- start_parms
+    print(logparms)
     likobj <- likfun(logparms)
-    
+    print(likobj)
     # test likelihood object    
     if( !test_likelihood_object(likobj) ){
         logparms <- 0.1*logparms
@@ -73,7 +74,7 @@ fisher_scoring <- function( likfun, start_parms, link,
     
     # add a small amount of regularization
     diag(info) <- diag(info) + 0.1*min(diag(info))
-
+    
     # print some stuff out
     if(!silent){
         cat(paste0("Iter ",0,": \n"))
