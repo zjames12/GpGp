@@ -58,9 +58,7 @@ fisher_scoring <- function( likfun, start_parms, link,
     
     # evaluate function at initial values
     logparms <- start_parms
-    print(logparms)
     likobj <- likfun(logparms)
-    print(likobj)
     # test likelihood object    
     if( !test_likelihood_object(likobj) ){
         logparms <- 0.1*logparms
