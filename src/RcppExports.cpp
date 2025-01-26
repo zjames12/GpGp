@@ -815,6 +815,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// exponential_local_anisotropic
+arma::mat exponential_local_anisotropic(arma::vec covparms, arma::mat locs, Rcpp::NumericVector arr);
+RcppExport SEXP _GpGp_exponential_local_anisotropic(SEXP covparmsSEXP, SEXP locsSEXP, SEXP arrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type covparms(covparmsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type locs(locsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type arr(arrSEXP);
+    rcpp_result_gen = Rcpp::wrap(exponential_local_anisotropic(covparms, locs, arr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// d_exponential_local_anisotropic
+arma::cube d_exponential_local_anisotropic(arma::vec covparms, arma::mat locs, Rcpp::NumericVector arr);
+RcppExport SEXP _GpGp_d_exponential_local_anisotropic(SEXP covparmsSEXP, SEXP locsSEXP, SEXP arrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type covparms(covparmsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type locs(locsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type arr(arrSEXP);
+    rcpp_result_gen = Rcpp::wrap(d_exponential_local_anisotropic(covparms, locs, arr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Linv_mult
 NumericVector Linv_mult(NumericMatrix Linv, NumericVector z, IntegerMatrix NNarray);
 RcppExport SEXP _GpGp_Linv_mult(SEXP LinvSEXP, SEXP zSEXP, SEXP NNarraySEXP) {
@@ -882,34 +908,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// calc_exponential_isotropic_likelihood
-double calc_exponential_isotropic_likelihood(NumericVector covparms, NumericMatrix locs, NumericMatrix NNarray, NumericVector y, NumericMatrix X, int profbeta, int grad_info);
-RcppExport SEXP _GpGp_calc_exponential_isotropic_likelihood(SEXP covparmsSEXP, SEXP locsSEXP, SEXP NNarraySEXP, SEXP ySEXP, SEXP XSEXP, SEXP profbetaSEXP, SEXP grad_infoSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type covparms(covparmsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type locs(locsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type NNarray(NNarraySEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< int >::type profbeta(profbetaSEXP);
-    Rcpp::traits::input_parameter< int >::type grad_info(grad_infoSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_exponential_isotropic_likelihood(covparms, locs, NNarray, y, X, profbeta, grad_info));
-    return rcpp_result_gen;
-END_RCPP
-}
-// meanC
-double meanC(NumericVector x);
-RcppExport SEXP _GpGp_meanC(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(meanC(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // vecchia_profbeta_loglik_grad_info
 List vecchia_profbeta_loglik_grad_info(NumericVector covparms, StringVector covfun_name, NumericVector y, NumericMatrix X, const NumericMatrix locs, NumericMatrix NNarray);
 RcppExport SEXP _GpGp_vecchia_profbeta_loglik_grad_info(SEXP covparmsSEXP, SEXP covfun_nameSEXP, SEXP ySEXP, SEXP XSEXP, SEXP locsSEXP, SEXP NNarraySEXP) {
@@ -923,6 +921,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericMatrix >::type locs(locsSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type NNarray(NNarraySEXP);
     rcpp_result_gen = Rcpp::wrap(vecchia_profbeta_loglik_grad_info(covparms, covfun_name, y, X, locs, NNarray));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecchia_profbeta_loglik_grad_info_local
+List vecchia_profbeta_loglik_grad_info_local(NumericVector covparms, StringVector covfun_name, NumericVector y, NumericMatrix X, const NumericMatrix locs, NumericMatrix NNarray, NumericVector aniso);
+RcppExport SEXP _GpGp_vecchia_profbeta_loglik_grad_info_local(SEXP covparmsSEXP, SEXP covfun_nameSEXP, SEXP ySEXP, SEXP XSEXP, SEXP locsSEXP, SEXP NNarraySEXP, SEXP anisoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type covparms(covparmsSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type covfun_name(covfun_nameSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix >::type locs(locsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type NNarray(NNarraySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type aniso(anisoSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecchia_profbeta_loglik_grad_info_local(covparms, covfun_name, y, X, locs, NNarray, aniso));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1073,14 +1088,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GpGp_d_matern_spacetime_categorical", (DL_FUNC) &_GpGp_d_matern_spacetime_categorical, 2},
     {"_GpGp_matern_spacetime_categorical_local", (DL_FUNC) &_GpGp_matern_spacetime_categorical_local, 2},
     {"_GpGp_d_matern_spacetime_categorical_local", (DL_FUNC) &_GpGp_d_matern_spacetime_categorical_local, 2},
+    {"_GpGp_exponential_local_anisotropic", (DL_FUNC) &_GpGp_exponential_local_anisotropic, 3},
+    {"_GpGp_d_exponential_local_anisotropic", (DL_FUNC) &_GpGp_d_exponential_local_anisotropic, 3},
     {"_GpGp_Linv_mult", (DL_FUNC) &_GpGp_Linv_mult, 3},
     {"_GpGp_L_mult", (DL_FUNC) &_GpGp_L_mult, 3},
     {"_GpGp_Linv_t_mult", (DL_FUNC) &_GpGp_Linv_t_mult, 3},
     {"_GpGp_L_t_mult", (DL_FUNC) &_GpGp_L_t_mult, 3},
     {"_GpGp_vecchia_Linv", (DL_FUNC) &_GpGp_vecchia_Linv, 5},
-    {"_GpGp_calc_exponential_isotropic_likelihood", (DL_FUNC) &_GpGp_calc_exponential_isotropic_likelihood, 7},
-    {"_GpGp_meanC", (DL_FUNC) &_GpGp_meanC, 1},
     {"_GpGp_vecchia_profbeta_loglik_grad_info", (DL_FUNC) &_GpGp_vecchia_profbeta_loglik_grad_info, 6},
+    {"_GpGp_vecchia_profbeta_loglik_grad_info_local", (DL_FUNC) &_GpGp_vecchia_profbeta_loglik_grad_info_local, 7},
     {"_GpGp_vecchia_profbeta_loglik", (DL_FUNC) &_GpGp_vecchia_profbeta_loglik, 6},
     {"_GpGp_vecchia_meanzero_loglik", (DL_FUNC) &_GpGp_vecchia_meanzero_loglik, 5},
     {"_GpGp_vecchia_grouped_profbeta_loglik_grad_info", (DL_FUNC) &_GpGp_vecchia_grouped_profbeta_loglik_grad_info, 6},

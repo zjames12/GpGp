@@ -1012,6 +1012,34 @@ d_matern_spacetime_categorical_local <- function(covparms, locs) {
     .Call('_GpGp_d_matern_spacetime_categorical_local', PACKAGE = 'GpGp', covparms, locs)
 }
 
+#' Local anisotropic exponential covariance function
+#'
+#' From a matrix of locations and covariance parameters of the form
+#' (variance, range, nugget), return the square matrix of
+#' all pairwise covariances.
+#' @param locs A matrix with \code{n} rows and \code{d} columns.
+#' Each row of locs is a point in R^d.
+#' @param covparms A vector with covariance parameters
+#' in the form (variance, range, nugget)
+#' @return A matrix with \code{n} rows and \code{n} columns, with the i,j entry
+#' containing the covariance between observations at \code{locs[i,]} and
+#' \code{locs[j,]}.
+#' @section Parameterization:
+#' The covariance parameter vector is (variance, range, nugget)
+#' = \eqn{(\sigma^2,\alpha,\tau^2)}, and the covariance function is parameterized
+#' as
+#' \deqn{ M(x,y) = \sigma^2 exp( - || x - y ||/ \alpha )}
+#' The nugget value \eqn{ \sigma^2 \tau^2 } is added to the diagonal of the covariance matrix.
+#' NOTE: the nugget is \eqn{ \sigma^2 \tau^2 }, not \eqn{ \tau^2 }. 
+exponential_local_anisotropic <- function(covparms, locs, arr) {
+    .Call('_GpGp_exponential_local_anisotropic', PACKAGE = 'GpGp', covparms, locs, arr)
+}
+
+#' @describeIn exponential_local_anisotropic Derivatives of local anisotropic exponential covariance
+d_exponential_local_anisotropic <- function(covparms, locs, arr) {
+    .Call('_GpGp_d_exponential_local_anisotropic', PACKAGE = 'GpGp', covparms, locs, arr)
+}
+
 #' Multiply approximate inverse Cholesky by a vector
 #'
 #' Vecchia's approximation implies a sparse approximation to the
@@ -1175,6 +1203,10 @@ vecchia_Linv <- function(covparms, covfun_name, locs, NNarray, start_ind = 1L) {
 #' @export
 vecchia_profbeta_loglik_grad_info <- function(covparms, covfun_name, y, X, locs, NNarray) {
     .Call('_GpGp_vecchia_profbeta_loglik_grad_info', PACKAGE = 'GpGp', covparms, covfun_name, y, X, locs, NNarray)
+}
+
+vecchia_profbeta_loglik_grad_info_local <- function(covparms, covfun_name, y, X, locs, NNarray, aniso) {
+    .Call('_GpGp_vecchia_profbeta_loglik_grad_info_local', PACKAGE = 'GpGp', covparms, covfun_name, y, X, locs, NNarray, aniso)
 }
 
 #' Vecchia's approximation to the Gaussian loglikelihood, with profiled 

@@ -97,7 +97,7 @@
 fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
     NNarray = NULL, start_parms = NULL, reorder = TRUE, group = TRUE,
     m_seq = c(10,30), max_iter = 40, fixed_parms = NULL,
-    silent = FALSE, st_scale = NULL, convtol = 1e-4){
+    silent = FALSE, st_scale = NULL, convtol = 1e-4, aniso = NULL){
 
     n <- length(y)
 
@@ -151,7 +151,8 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
               "exponential_scaledim",
               "matern_categorical",
               "matern_spacetime_categorical",
-              "matern_spacetime_categorical_local"
+              "matern_spacetime_categorical_local",
+              "exponential_local_anisotropic"
             ))
     {
         stop("unrecognized covariance function name `covfun_name'.")
@@ -286,6 +287,24 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
                 
             }
 
+        } else if (covfun_name %in% c("exponential_local_anisotropic")) {
+            likfun <- function(logparms){
+
+                lp <- rep(NA,length(start_parms))
+                lp[active] <- logparms
+                lp[!active] <- invlink_startparms[!active]
+                
+                likobj <- vecchia_profbeta_loglik_grad_info_local(
+                    link(lp),covfun_name,yord,Xord,locsord,NNarray[,1:(m+1)], aniso)
+                likobj$loglik <- -likobj$loglik - pen(link(lp))
+                likobj$grad <- -c(likobj$grad)*dlink(lp) -
+                    dpen(link(lp))*dlink(lp)
+                likobj$info <- likobj$info*outer(dlink(lp),dlink(lp)) -
+                    ddpen(link(lp))*outer(dlink(lp),dlink(lp))
+                likobj$grad <- likobj$grad[active]
+                likobj$info <- likobj$info[active,active]
+                return(likobj)
+            }
         } else {
 
             likfun <- function(logparms){
@@ -372,7 +391,9 @@ get_start_parms <- function(y,X,locs,covfun_name){
 
     randinds <- sample(1:n, min(n,200))
     dmat <- fields::rdist(locs[randinds,])
-
+    if(covfun_name %in% c("exponential_local_anisotropic")){
+        start_parms <- c(start_var, start_nug)
+    }
     if(covfun_name %in% c("exponential_isotropic","exponential_isotropic_fast")){
         start_range <- mean( dmat )/4
         start_parms <- c(start_var, start_range, start_nug)
@@ -766,7 +787,11 @@ get_penalty <- function(y,X,locs,covfun_name){
     #}
     #plot(xvec,ddpenvec)
     #lines(xvec[3:length(xvec)],diff(diff(penvec))/0.1^2)
-    
+    if(covfun_name %in% c("exponential_local_anisotropic")){
+          pen <- function(x){  pen_nug(x,2) +   pen_var(x,1)   }
+         dpen <- function(x){  dpen_nug(x,2) +  dpen_var(x,1)  }
+        ddpen <- function(x){  ddpen_nug(x,2) + ddpen_var(x,1) }
+    }
     if(covfun_name %in% c("exponential_isotropic","exponential_isotropic_fast")){
           pen <- function(x){  pen_nug(x,3) +   pen_var(x,1)   }
          dpen <- function(x){  dpen_nug(x,3) +  dpen_var(x,1)  }

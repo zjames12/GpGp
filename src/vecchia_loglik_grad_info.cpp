@@ -74,6 +74,33 @@ List vecchia_profbeta_loglik_grad_info(
         
 }
 
+// [[Rcpp::export]]
+List vecchia_profbeta_loglik_grad_info_local( 
+    NumericVector covparms, 
+    StringVector covfun_name,
+    NumericVector y,
+    NumericMatrix X,
+    const NumericMatrix locs,
+    NumericMatrix NNarray,
+    NumericVector aniso){
+    NumericVector ll(1);
+    NumericVector grad( covparms.length() );
+    NumericVector betahat( X.ncol() );
+    NumericMatrix info( covparms.length(), covparms.length() );
+    NumericMatrix betainfo( X.ncol(), X.ncol() );
+
+    // this function calls arma_onepass_compute_pieces
+    // then synthesizes the result into loglik, beta, grad, info, betainfo
+    synthesize_local(covparms, covfun_name, locs, NNarray, y, X,
+        &ll, &betahat, &grad, &info, &betainfo, true, true, aniso
+    );
+    
+    List ret = List::create( Named("loglik") = ll, Named("betahat") = betahat,
+        Named("grad") = grad, Named("info") = info, Named("betainfo") = betainfo );
+    return ret;
+        
+}
+
 //' Vecchia's approximation to the Gaussian loglikelihood, with profiled 
 //' regression coefficients.
 //'

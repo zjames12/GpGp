@@ -19,6 +19,7 @@
 #include "covmatrix_funs_11.h"
 #include "covmatrix_funs_12.h"
 #include "covmatrix_funs_13.h"
+#include "covmatrix_funs_14.h"
 
 using namespace Rcpp;
 using namespace arma;
@@ -193,11 +194,18 @@ void get_covfun(std::string covfun_name_string,  mat (*p_covfun[1])(arma::vec, a
         p_covfun[0] = matern_spacetime_categorical_local;
         p_d_covfun[0] = d_matern_spacetime_categorical_local;
     }
-    else { // stop the program
-        Rcpp::Rcout << "Unrecognized Covariance Function Name \n";
-    }
 
 }
 
-
+void get_local_covfun(std::string covfun_name_string,  mat (*p_covfun[1])(arma::vec, arma::mat, Rcpp::NumericVector), cube (*p_d_covfun[1])(arma::vec, arma::mat, Rcpp::NumericVector)  )
+{
+    if( covfun_name_string.compare("exponential_local_anisotropic") == 0 )
+    { 
+        p_covfun[0] = exponential_local_anisotropic;
+        p_d_covfun[0] = d_exponential_local_anisotropic;
+    }
+    else { // stop the program
+        Rcpp::Rcout << "Unrecognized Covariance Function Name \n";
+    }
+}
 #endif
