@@ -1179,6 +1179,85 @@ NumericMatrix vecchia_Linv(
     return Linv_r;    
 }
 
+// [[Rcpp::export]]
+NumericMatrix vecchia_Linv_local(
+    arma::vec covparms,
+    StringVector covfun_name,
+    arma::mat locs,
+    arma::mat NNarray,
+    Rcpp::NumericVector aniso, 
+    int start_ind = 1
+    ){
+    
+    // data dimensions
+    int n = locs.n_rows;
+    int m = NNarray.n_cols;
+    //int nparms = covparms.length();
+    int dim = locs.n_cols;
+    
+    // convert StringVector to std::string to use .compare() below
+    std::string covfun_name_string;
+    covfun_name_string = covfun_name[0];
+    
+    // assign covariance fun and derivative based on covfun_name_string
+    mat (*p_covfun[1])(arma::vec, arma::mat, Rcpp::NumericVector);
+    cube (*p_d_covfun[1])(arma::vec, arma::mat, Rcpp::NumericVector);
+    get_local_covfun(covfun_name_string, p_covfun, p_d_covfun);
+    // mat (*p_covfun[1])(arma::vec, arma::mat);
+    // cube (*p_d_covfun[1])(arma::vec, arma::mat);
+    // get_covfun(covfun_name_string, p_covfun, p_d_covfun);
+    arma::mat Linv = arma::mat(n, m, fill::zeros);
+    // loop over every observation    
+#pragma omp parallel 
+{
+    arma::mat l_Linv = arma::mat(n, m, fill::zeros);
+#pragma omp for
+    for(int i=start_ind-1; i<n; i++){
+    
+        //Rcpp::checkUserInterrupt();
+        int bsize = std::min(i+1,m);
+
+        // first, fill in ysub, locsub, and X0 in reverse order
+        arma::mat locsub(bsize, dim);
+        Rcpp::NumericVector localsub(dim * dim * bsize);
+        localsub.attr("dim") = Dimension(dim, dim, bsize);
+        for(int j=bsize-1; j>=0; j--){
+            for (int i1 = 0; i1 < dim; i1++) {
+                for (int i2 = 0; i2 < dim; i2++) {
+                    localsub[i1 + dim * (i2 + dim * (bsize-1-j))] = aniso[i1 + dim * (i2 + dim * (NNarray(i,j)-1))];
+                }
+            }
+            for(int k=0;k<dim;k++){ locsub(bsize-1-j,k) = locs( NNarray(i,j)-1, k ); }
+        }
+        
+        // compute covariance matrix and derivatives and take cholesky
+        arma::mat covmat = p_covfun[0]( covparms, locsub, localsub );
+        // arma::mat covmat = p_covfun[0]( covparms, locsub );
+        arma::mat cholmat = eye( size(covmat) );
+        bool checkchol = chol( cholmat, covmat, "lower" );
+        //if(i==n-1){ Rcout << checkchol << endl; }
+        // get last row of cholmat
+        arma::vec onevec = zeros(bsize);
+        onevec(bsize-1) = 1.0;
+        arma::vec choli2;
+        if( checkchol == 0 ){
+            choli2 = onevec;
+            //Rcout << "failed chol" << endl;
+            //Rcout << checkchol << endl;
+        } else {
+            choli2 = solve( trimatu(cholmat.t()), onevec );
+        }
+        for(int j=bsize-1; j>=0; j--){
+            l_Linv(i,bsize-1-j) = choli2(j);
+        }
+    }
+#pragma omp critical
+    Linv += l_Linv; 
+}
+    NumericMatrix Linv_r = wrap(Linv);
+    return Linv_r;    
+}
+
 
 #endif
     
