@@ -142,6 +142,11 @@ void get_covfun(std::string covfun_name_string,  mat (*p_covfun[1])(arma::vec, a
     { 
         p_covfun[0] = exponential_nonstat_var; 
         p_d_covfun[0] = d_exponential_nonstat_var;
+    }
+    else if( covfun_name_string.compare("exponential_nonstat_anisotropy") == 0 )
+    { 
+        p_covfun[0] = exponential_nonstat_anisotropy; 
+        p_d_covfun[0] = d_exponential_nonstat_anisotropy;
     } 
     else if( covfun_name_string.compare("matern15_scaledim") == 0 )
     { 
