@@ -103,11 +103,11 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
 
     # check that length of observation vector same as
     # number of locations
+    locs <- as.matrix(locs)
     if( nrow(locs) != n ){
         stop("length of observation vector y not equal
               to the number of locations (rows in locs)")
     }
-    locs <- as.matrix(locs)
 
     # check if design matrix is specified
     if( is.null(X) ){
@@ -133,6 +133,7 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
               "exponential_anisotropic3D_alt",
               "matern_nonstat_var",
               "exponential_nonstat_var",
+              "exponential_nonstat_anisotropy",
               "matern_sphere",
               "exponential_sphere",
               "matern_sphere_warp",
@@ -289,7 +290,6 @@ fit_model <- function(y, locs, X = NULL, covfun_name = "matern_isotropic",
         } else {
 
             likfun <- function(logparms){
-
                 lp <- rep(NA,length(start_parms))
                 lp[active] <- logparms
                 lp[!active] <- invlink_startparms[!active]
@@ -547,6 +547,9 @@ get_start_parms <- function(y,X,locs,covfun_name){
         start_range <- mean( dmat )/4
         start_parms <- c(start_var, start_range, start_nug, rep(0,ncol(locs)-2))
     }
+    if(covfun_name == "exponential_nonstat_anisotropy"){
+        start_parms <- c(start_var, start_nug, rep(0,3*(ncol(locs)-2)))
+    }
     if(covfun_name == "matern_categorical"){
         start_range <- mean( dmat )/4
         start_parms <- c(start_var, start_range, start_smooth, start_var, start_nug)
@@ -641,6 +644,12 @@ get_linkfun <- function(covfun_name){
         dlink <- function(x){   c( exp(x[1:3]), rep(1,length(x)-3) ) }
         ddlink <- function(x){  c( exp(x[1:3]), rep(0,length(x)-3) ) }
         invlink <- function(x){ c( log(x[1:3]), x[4:length(x)]     ) }
+    }
+    if(covfun_name == "exponential_nonstat_anisotropy"){
+        link <- function(x){    c( exp(x[1:2]), x[3:length(x)]     ) }
+        dlink <- function(x){   c( exp(x[1:2]), rep(1,length(x)-2) ) }
+        ddlink <- function(x){  c( exp(x[1:2]), rep(0,length(x)-2) ) }
+        invlink <- function(x){ c( log(x[1:2]), x[3:length(x)]     ) }
     }
     if(covfun_name == "matern_sphere"){ lonlat <- TRUE }
     if(covfun_name == "exponential_sphere"){ lonlat <- TRUE }
@@ -917,6 +926,11 @@ get_penalty <- function(y,X,locs,covfun_name){
           pen <- function(x){  pen_nug(x,3)  +   pen_var(x,1)   }
          dpen <- function(x){  dpen_nug(x,3)  +  dpen_var(x,1)  }
         ddpen <- function(x){  ddpen_nug(x,3)  + ddpen_var(x,1) }
+    }
+    if(covfun_name == "exponential_nonstat_anisotropy"){
+          pen <- function(x){  pen_nug(x,2)  +   pen_var(x,1)   }
+         dpen <- function(x){  dpen_nug(x,2)  +  dpen_var(x,1)  }
+        ddpen <- function(x){  ddpen_nug(x,2)  + ddpen_var(x,1) }
     }
     return( list( pen = pen, dpen = dpen, ddpen = ddpen ) )
 }

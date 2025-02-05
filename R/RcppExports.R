@@ -269,7 +269,7 @@ d_exponential_anisotropic3D <- function(covparms, locs) {
 #' (B13,B23) can be interpreted as a drift vector in space over time
 #' if first two dimensions are space and third is time.
 #' Assuming x is transformed to u and y transformed to v, the covariances are 
-#' \deqn{ M(x,y) = \sigma^2 exp( - || u - v || )
+#' \deqn{ M(x,y) = \sigma^2 exp( - || u - v || ) }
 #' The nugget value \eqn{ \sigma^2 \tau^2 } is added to the diagonal of the covariance matrix.
 #' NOTE: the nugget is \eqn{ \sigma^2 \tau^2 }, not \eqn{ \tau^2 }. 
 exponential_anisotropic3D_alt <- function(covparms, locs) {
@@ -343,7 +343,7 @@ d_exponential_scaledim <- function(covparms, locs) {
 #' (variance, range_1, range_2, smoothness, nugget), return the square matrix of
 #' all pairwise covariances.
 #' @param locs A matrix with \code{n} rows and \code{d+1} columns.
-#' Each row of locs is a point in R^{d+1}. The first \code{d} columns
+#' Each row of locs is a point in R^(d+1). The first \code{d} columns
 #' should contain the spatial coordinates. The last column contains the times.
 #' @param covparms A vector with covariance parameters
 #' in the form (variance, range_1, range_2, smoothness, nugget). range_1 is the
@@ -373,7 +373,7 @@ d_matern_spacetime <- function(covparms, locs) {
 #' (variance, range_1, range_2, nugget), return the square matrix of
 #' all pairwise covariances.
 #' @param locs A matrix with \code{n} rows and \code{d+1} columns.
-#' Each row of locs is a point in R^{d+1}. The first \code{d} columns
+#' Each row of locs is a point in R^(d+1). The first \code{d} columns
 #' should contain the spatial coordinates. The last column contains the times.
 #' @param covparms A vector with covariance parameters
 #' in the form (variance, range_1, range_2, nugget). range_1 is the
@@ -709,6 +709,38 @@ exponential_nonstat_var <- function(covparms, Z) {
 #' @describeIn exponential_nonstat_var Derivatives with respect to parameters
 d_exponential_nonstat_var <- function(covparms, Z) {
     .Call('_GpGp_d_exponential_nonstat_var', PACKAGE = 'GpGp', covparms, Z)
+}
+
+#' Isotropic exponential covariance function, nonstationary variances
+#'
+#' From a matrix of locations and covariance parameters of the form
+#' (variance, range, nugget, <nonstat variance parameters>), 
+#' return the square matrix of all pairwise covariances.
+#' @param Z A matrix with \code{n} rows and \code{2} columns for spatial
+#' locations + \code{p} columns describing spatial basis functions.
+#' Each row of locs gives a point in R^2 (two dimensions only!) + the value
+#' of \code{p} spatial basis functions.
+#' @param covparms A vector with covariance parameters
+#' in the form (variance, range, nugget, <nonstat variance parameters>).
+#' The number of nonstationary variance parameters should equal \code{p}.
+#' @return A matrix with \code{n} rows and \code{n} columns, with the i,j entry
+#' containing the covariance between observations at \code{locs[i,]} and
+#' \code{locs[j,]}.
+#' @section Parameterization:
+#' This covariance function multiplies the isotropic exponential covariance
+#' by a nonstationary variance function. The form of the covariance is
+#' \deqn{ C(x,y) = exp( \phi(x) + \phi(y) ) M(x,y) }
+#' where M(x,y) is the isotropic exponential covariance, and 
+#' \deqn{ \phi(x) = c_1 \phi_1(x) + ... + c_p \phi_p(x) }
+#' where \eqn{\phi_1,...,\phi_p} are the spatial basis functions
+#' contained in the last \code{p} columns of \code{Z}, and 
+#' \eqn{c_1,...,c_p} are the nonstationary variance parameters.
+exponential_nonstat_anisotropy <- function(covparms, Z) {
+    .Call('_GpGp_exponential_nonstat_anisotropy', PACKAGE = 'GpGp', covparms, Z)
+}
+
+d_exponential_nonstat_anisotropy <- function(covparms, Z) {
+    .Call('_GpGp_d_exponential_nonstat_anisotropy', PACKAGE = 'GpGp', covparms, Z)
 }
 
 #' Matern covariance function, smoothess = 1.5, different range parameter for each dimension
